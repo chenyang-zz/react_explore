@@ -29,6 +29,13 @@
         "shared": "workspace:*",
       },
     },
+    "packages/react-reconciler": {
+      "name": "react-reconciler",
+      "version": "1.0.0",
+      "dependencies": {
+        "shared": "workspace:*",
+      },
+    },
     "packages/shared": {
       "name": "shared",
       "version": "1.0.0",
@@ -490,6 +497,8 @@
     "quick-lru": ["quick-lru@4.0.1", "", {}, "sha512-ARhCpm70fzdcvNQfPoy49IaanKkTlRWF2JMzqhcJbhSFRZv7nPTvZJdcY7301IPmvW+/p0RgIWnQDLJxifsQ7g=="],
 
     "react": ["react@workspace:packages/react"],
+
+    "react-reconciler": ["react-reconciler@workspace:packages/react-reconciler"],
 
     "read-pkg": ["read-pkg@5.2.0", "", { "dependencies": { "@types/normalize-package-data": "^2.4.0", "normalize-package-data": "^2.5.0", "parse-json": "^5.0.0", "type-fest": "^0.6.0" } }, "sha512-Ug69mNOpfvKDAc2Q8DRpMjjzdtrnv9HcSMX+4VsZxD1aZ6ZzrIE7rlzXBtWTyhULSMKg076AW6WR5iZpD0JiOg=="],
 
