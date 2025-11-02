@@ -7,8 +7,14 @@
 import { ReactElementType } from 'shared/ReactTypes';
 import { FiberNode } from './ReactFiber';
 import { processUpdateQueue, type UpdateQueue } from './ReactUpdateQueue';
-import { HostComponent, HostRoot, HostText } from './ReactWorkTags';
+import {
+	FunctionComponent,
+	HostComponent,
+	HostRoot,
+	HostText
+} from './ReactWorkTags';
 import { mountChildFibers, reconcileChildFibers } from './ReactChildFiber';
+import { renderWithHooks } from './ReactFiberHooks';
 
 export function beginWork(wip: FiberNode): FiberNode | null {
 	// 比较，返回子FiberNode
@@ -20,12 +26,19 @@ export function beginWork(wip: FiberNode): FiberNode | null {
 			return updateHostComponent(wip);
 		case HostText:
 			return null;
+		case FunctionComponent:
+			return updateFunctionComponent(wip);
 		default:
 			if (__DEV__) {
 				console.warn('beginWork未实现的类型', wip.tag);
 			}
 			return null;
 	}
+}
+function updateFunctionComponent(wip: FiberNode) {
+	const nextChildren = renderWithHooks(wip);
+	reconcileChildren(wip, nextChildren);
+	return wip.child;
 }
 
 function updateHostRoot(wip: FiberNode) {

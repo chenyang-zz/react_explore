@@ -1,10 +1,17 @@
 import {
 	appendInitialChild,
+	Container,
 	createInstance,
-	createTextInstance
+	createTextInstance,
+	Instance
 } from 'hostConfig';
 import { FiberNode } from './ReactFiber';
-import { HostComponent, HostRoot, HostText } from './ReactWorkTags';
+import {
+	FunctionComponent,
+	HostComponent,
+	HostRoot,
+	HostText
+} from './ReactWorkTags';
 import { NoFlags } from './ReactFiberFlags';
 
 // 递归中的归
@@ -39,6 +46,9 @@ export function completeWork(wip: FiberNode) {
 			}
 			bubbleProperties(wip);
 			return;
+		case FunctionComponent:
+			bubbleProperties(wip);
+			return;
 		default:
 			if (__DEV__) {
 				console.warn('未实现的completeWork类型', wip.tag);
@@ -47,7 +57,7 @@ export function completeWork(wip: FiberNode) {
 	}
 }
 
-function appendAllChildren(parent: any, wip: FiberNode) {
+function appendAllChildren(parent: Instance, wip: FiberNode) {
 	let node = wip.child;
 
 	while (node !== null) {
