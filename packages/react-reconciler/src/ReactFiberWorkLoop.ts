@@ -1,6 +1,8 @@
 import { createWorkInProcess, FiberNode, FiberRootNode } from './ReactFiber';
-import { beginWork } from './ReactFiberBeginWorl';
+import { beginWork } from './ReactFiberBeginWork';
+import { commitMutationEffects } from './ReactFiberCommitWork';
 import { completeWork } from './ReactFiberCompleteWork';
+import { MutationMask, NoFlags } from './ReactFiberFlags';
 import { HostRoot } from './ReactWorkTags';
 
 let workInProcess: FiberNode | null = null;
@@ -35,6 +37,15 @@ function renderRoot(root: FiberRootNode) {
 	// 初始化
 	prepareFreshStack(root);
 
+	// render阶段
+	// beginwork
+	// completeWork
+
+	// commit阶段
+	// beforeMutation
+	// mutation
+	// layout
+
 	do {
 		try {
 			workLoop();
@@ -47,9 +58,44 @@ function renderRoot(root: FiberRootNode) {
 		}
 	} while (true);
 
-	// 根据 wip中的fiber树以及flag执行更新dom操作
 	const finishedWork = root.current.alternate;
-	// commitRoot(root);
+	root.finishedWork = finishedWork;
+
+	// 根据 wip中的fiber树以及flag执行更新dom操作
+	commitRoot(root);
+}
+
+function commitRoot(root: FiberRootNode) {
+	const finishedWork = root.finishedWork;
+
+	if (finishedWork === null) {
+		return;
+	}
+
+	if (__DEV__) {
+		console.log('commit阶段开始', finishedWork);
+	}
+
+	// 重置
+	root.finishedWork = null;
+
+	// 判断是否存在3个子阶段需要执行的操作
+	// root flags root subtreeFlags
+	const subtreeHasEffect =
+		(finishedWork.subtreeFlags & MutationMask) !== NoFlags;
+	const rootHasEffect = (finishedWork.flags & MutationMask) !== NoFlags;
+
+	if (rootHasEffect || subtreeHasEffect) {
+		// beforeMutation
+		// mutation (Placement)
+		commitMutationEffects(finishedWork);
+
+		root.current = finishedWork;
+
+		// layout
+	} else {
+		root.current = finishedWork;
+	}
 }
 
 function workLoop() {
