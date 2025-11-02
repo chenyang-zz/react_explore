@@ -1,0 +1,7 @@
+{
+	"name": "shared",
+	"version": "1.0.0",
+	"description": "所以公用辅助方法及类型定义",
+	"author": "chenyang",
+	"license": "ISC"
+}
