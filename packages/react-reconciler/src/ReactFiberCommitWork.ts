@@ -85,8 +85,6 @@ function appendPlacementNodeIntoContainer(
 ) {
 	// fiber host
 	if (finishedWork.tag === HostComponent || finishedWork.tag === HostText) {
-		console.log(finishedWork);
-
 		appendChildToContainer(finishedWork.stateNode, hostParent);
 		return;
 	}
