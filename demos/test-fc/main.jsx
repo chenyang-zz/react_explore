@@ -4,14 +4,17 @@ import ReactDOM from 'react-dom';
 const root = document.getElementById('root');
 
 function Child() {
-	const [num] = useState(100);
-	return <span>{num}</span>;
+	return <span>explore react</span>;
 }
 
 function App() {
+	const [num, setNum] = useState(100);
+	console.log(num);
+
+	window.setNum = setNum;
 	return (
 		<div>
-			<Child />
+			<span>{num === 3 ? <Child /> : num}</span>
 		</div>
 	);
 }

@@ -58,7 +58,7 @@ function renderRoot(root: FiberRootNode) {
 		}
 	} while (true);
 
-	const finishedWork = root.current.alternate;
+	const finishedWork = root.current.alternate!;
 	root.finishedWork = finishedWork;
 
 	// 根据 wip中的fiber树以及flag执行更新dom操作
@@ -91,7 +91,6 @@ function commitRoot(root: FiberRootNode) {
 		commitMutationEffects(finishedWork);
 
 		root.current = finishedWork;
-
 		// layout
 	} else {
 		root.current = finishedWork;

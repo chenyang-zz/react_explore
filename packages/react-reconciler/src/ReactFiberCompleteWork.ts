@@ -12,7 +12,11 @@ import {
 	HostRoot,
 	HostText
 } from './ReactWorkTags';
-import { NoFlags } from './ReactFiberFlags';
+import { NoFlags, Update } from './ReactFiberFlags';
+
+function markUpdate(fiber: FiberNode) {
+	fiber.flags |= Update;
+}
 
 // 递归中的归
 export function completeWork(wip: FiberNode) {
@@ -38,6 +42,11 @@ export function completeWork(wip: FiberNode) {
 		case HostText:
 			if (current !== null && wip.stateNode) {
 				// update
+				const oldText = current.memoizedProps.content;
+				const newText = newProps.content;
+				if (oldText !== newText) {
+					markUpdate(wip);
+				}
 			} else {
 				// 1. 构建DOM
 				// 2. 将DOM插入到DOM树中

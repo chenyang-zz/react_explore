@@ -15,12 +15,12 @@ export default [
 		output: [
 			{
 				file: `${pkgDistPath}/index.js`,
-				name: 'index.js',
+				name: 'ReactDOM',
 				format: 'umd'
 			},
 			{
 				file: `${pkgDistPath}/client.js`,
-				name: 'client.js',
+				name: 'client',
 				format: 'umd'
 			}
 		],
@@ -30,7 +30,7 @@ export default [
 			// resolve alias
 			alias({
 				entries: {
-					hostConfig: `${pkgPath}/src/ReactHostConfig.ts`
+					hostConfig: `${pkgPath}/src/client/ReactHostConfig.ts`
 				}
 			}),
 			generatePackageJson({
@@ -47,5 +47,18 @@ export default [
 				})
 			})
 		]
+	},
+	// react-test-utils
+	{
+		input: `${pkgPath}/test-utils.ts`,
+		output: [
+			{
+				file: `${pkgDistPath}/test-utils.js`,
+				name: 'test-utils',
+				format: 'umd'
+			}
+		],
+		external: ['react-dom', 'react'],
+		plugins: getBaseRollupPlugins()
 	}
 ];
