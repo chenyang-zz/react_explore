@@ -9,12 +9,11 @@ function Child() {
 
 function App() {
 	const [num, setNum] = useState(100);
-	console.log(num);
-
-	window.setNum = setNum;
 	return (
 		<div>
-			<span>{num === 3 ? <Child /> : num}</span>
+			<span onClickCapture={() => setNum(num + 1)}>
+				{num === 3 ? <Child /> : num}
+			</span>
 		</div>
 	);
 }

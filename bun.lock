@@ -55,6 +55,7 @@
       "name": "react-reconciler",
       "version": "1.0.0",
       "dependencies": {
+        "react-dom": "workspace:*",
         "shared": "workspace:*",
       },
     },

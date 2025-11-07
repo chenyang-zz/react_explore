@@ -27,7 +27,7 @@ export default defineConfig({
 				find: 'hostConfig',
 				replacement: path.resolve(
 					resolvePkgPath('react-dom'),
-					'./src/ReactHostConfig.ts'
+					'./src/client/ReactHostConfig.ts'
 				)
 			}
 		]
