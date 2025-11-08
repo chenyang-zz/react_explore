@@ -14,6 +14,7 @@ import {
 } from './ReactWorkTags';
 import { NoFlags, Update } from './ReactFiberFlags';
 import { updateFiberProps } from 'react-dom/src/events/SyntheticEvent';
+import { Props, Type } from 'shared/ReactTypes';
 
 function markUpdate(fiber: FiberNode) {
 	fiber.flags |= Update;

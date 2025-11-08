@@ -2,6 +2,8 @@ import {
 	appendChildToContainer,
 	commitUpdate,
 	Container,
+	insertChildToContainer,
+	Instance,
 	removeChild
 } from 'hostConfig';
 import { FiberNode, FiberRootNode } from './ReactFiber';
@@ -154,10 +156,54 @@ function commitPlacement(finishedWork: FiberNode) {
 		console.warn('执行Placement操作', finishedWork);
 	}
 
+	// parent DOM
 	const hostParent = getHostParent(finishedWork);
 
+	// host sibling
+	const sibling = getHostSibling(finishedWork);
+
 	if (hostParent !== null) {
-		appendPlacementNodeIntoContainer(finishedWork, hostParent);
+		insertOrAppendPlacementNodeIntoContainer(finishedWork, hostParent, sibling);
+	}
+}
+
+function getHostSibling(fiber: FiberNode) {
+	let node: FiberNode = fiber;
+
+	findSibling: while (true) {
+		while (node.sibling === null) {
+			// 向上遍历
+			const parent = node.return;
+
+			if (
+				parent === null ||
+				parent.tag === HostComponent ||
+				parent.tag === HostRoot
+			) {
+				return null;
+			}
+			node = parent;
+		}
+
+		node.sibling.return = node.return;
+		node = node.sibling;
+
+		while (node.tag !== HostComponent && node.tag !== HostText) {
+			// 向下遍历
+			if ((node.flags & Placement) !== NoFlags) {
+				// 不稳定节点
+				continue findSibling;
+			}
+			if (node.child === null) {
+				continue findSibling;
+			}
+			node.child.return = node;
+			node = node.child;
+		}
+
+		if ((node.flags & Placement) === NoFlags) {
+			return node.stateNode;
+		}
 	}
 }
 
@@ -183,23 +229,29 @@ function getHostParent(fiber: FiberNode): Container | null {
 	return null;
 }
 
-function appendPlacementNodeIntoContainer(
+function insertOrAppendPlacementNodeIntoContainer(
 	finishedWork: FiberNode,
-	hostParent: Container
+	hostParent: Container,
+	before?: Instance
 ) {
 	// fiber host
 	if (finishedWork.tag === HostComponent || finishedWork.tag === HostText) {
-		appendChildToContainer(finishedWork.stateNode, hostParent);
+		if (before) {
+			insertChildToContainer(finishedWork.stateNode, hostParent, before);
+		} else {
+			appendChildToContainer(finishedWork.stateNode, hostParent);
+		}
+
 		return;
 	}
 
 	const child = finishedWork.child;
 	if (child !== null) {
-		appendPlacementNodeIntoContainer(child, hostParent);
+		insertOrAppendPlacementNodeIntoContainer(child, hostParent);
 
 		let sibing = child.sibling;
 		while (sibing !== null) {
-			appendPlacementNodeIntoContainer(sibing, hostParent);
+			insertOrAppendPlacementNodeIntoContainer(sibing, hostParent);
 			sibing = sibing.sibling;
 		}
 	}
