@@ -7,6 +7,7 @@ import {
 } from 'hostConfig';
 import { FiberNode } from './ReactFiber';
 import {
+	Fragment,
 	FunctionComponent,
 	HostComponent,
 	HostRoot,
@@ -26,9 +27,6 @@ export function completeWork(wip: FiberNode) {
 	const current = wip.alternate;
 
 	switch (wip.tag) {
-		case HostRoot:
-			bubbleProperties(wip);
-			return;
 		case HostComponent:
 			if (current !== null && wip.stateNode) {
 				// update
@@ -64,6 +62,8 @@ export function completeWork(wip: FiberNode) {
 			bubbleProperties(wip);
 			return;
 		case FunctionComponent:
+		case Fragment:
+		case HostRoot:
 			bubbleProperties(wip);
 			return;
 		default:

@@ -8,6 +8,7 @@ import { ReactElementType } from 'shared/ReactTypes';
 import { FiberNode } from './ReactFiber';
 import { processUpdateQueue, type UpdateQueue } from './ReactUpdateQueue';
 import {
+	Fragment,
 	FunctionComponent,
 	HostComponent,
 	HostRoot,
@@ -28,6 +29,8 @@ export function beginWork(wip: FiberNode): FiberNode | null {
 			return null;
 		case FunctionComponent:
 			return updateFunctionComponent(wip);
+		case Fragment:
+			return updateFragmentComponent(wip);
 		default:
 			if (__DEV__) {
 				console.warn('beginWork未实现的类型', wip.tag);
@@ -35,6 +38,13 @@ export function beginWork(wip: FiberNode): FiberNode | null {
 			return null;
 	}
 }
+
+function updateFragmentComponent(wip: FiberNode) {
+	const nextChildren = wip.pendingProps;
+	reconcileChildren(wip, nextChildren);
+	return wip.child;
+}
+
 function updateFunctionComponent(wip: FiberNode) {
 	const nextChildren = renderWithHooks(wip);
 	reconcileChildren(wip, nextChildren);
@@ -61,7 +71,10 @@ function updateHostComponent(wip: FiberNode) {
 	return wip.child;
 }
 
-function reconcileChildren(wip: FiberNode, children?: ReactElementType) {
+function reconcileChildren(
+	wip: FiberNode,
+	children?: ReactElementType | ReactElementType[]
+) {
 	const current = wip.alternate;
 
 	if (current !== null) {
