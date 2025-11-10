@@ -81,7 +81,7 @@ function recordHostChildrenToDelete(
 ) {
 	// 1. 找到第一个root host节点
 	// 2. 每找到一个host节点，判断这一个节点是不是 1 中找到的节点的兄弟节点
-	let lastOne = childrenToDelete[childrenToDelete.length - 1];
+	const lastOne = childrenToDelete[childrenToDelete.length - 1];
 	if (!lastOne) {
 		childrenToDelete.push(unmountFiber);
 	} else {

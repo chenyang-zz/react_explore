@@ -8,6 +8,7 @@ import {
 import { type Flags, NoFlags } from './ReactFiberFlags';
 import type { Container } from 'hostConfig';
 import type { UpdateQueue } from './ReactUpdateQueue';
+import { NoLane, NoLanes, type Lane, type Lanes } from './ReactFiberLane';
 
 export class FiberNode {
 	tag: WorkTag;
@@ -68,12 +69,16 @@ export class FiberRootNode {
 	container: Container;
 	current: FiberNode;
 	finishedWork: FiberNode | null;
+	pendingLanes: Lanes;
+	finishedLane: Lane;
 
 	constructor(container: Container, hostRootFiber: FiberNode) {
 		this.container = container;
 		this.current = hostRootFiber;
 		hostRootFiber.stateNode = this;
 		this.finishedWork = null;
+		this.pendingLanes = NoLanes;
+		this.finishedLane = NoLane;
 	}
 }
 
