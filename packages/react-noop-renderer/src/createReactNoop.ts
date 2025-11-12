@@ -1,4 +1,3 @@
-import { updateFiberProps } from 'react-dom/src/events/SyntheticEvent';
 import type { FiberNode } from 'react-reconciler/src/ReactFiber';
 import { HostComponent, HostText } from 'react-reconciler/src/ReactWorkTags';
 import type { Props } from 'shared/ReactTypes';
@@ -86,6 +85,10 @@ export function commitUpdate(fiber: FiberNode) {
 
 export function commitTextUpdate(textInstance: TextInstance, content: string) {
 	textInstance.text = content;
+}
+
+export function updateFiberProps(instance: Instance, props: Props) {
+	instance.props = props;
 }
 
 export function removeChild(

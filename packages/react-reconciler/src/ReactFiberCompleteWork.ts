@@ -14,7 +14,6 @@ import {
 	HostText
 } from './ReactWorkTags';
 import { NoFlags, Update } from './ReactFiberFlags';
-import { updateFiberProps } from 'react-dom/src/events/SyntheticEvent';
 import { Props, Type } from 'shared/ReactTypes';
 
 function markUpdate(fiber: FiberNode) {
@@ -74,7 +73,7 @@ export function completeWork(wip: FiberNode) {
 	}
 }
 
-function appendAllChildren(parent: Instance, wip: FiberNode) {
+function appendAllChildren(parent: Instance | Container, wip: FiberNode) {
 	let node = wip.child;
 
 	while (node !== null) {
