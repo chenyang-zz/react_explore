@@ -1,3 +1,4 @@
+import { scheduleMircoTask } from 'hostConfig';
 import {
 	createWorkInProcess,
 	FiberNode,
@@ -23,7 +24,6 @@ import {
 } from './ReactFiberLane';
 import {
 	flushSyncCallbacks,
-	scheduleMircoTask,
 	scheduleSyncCallback
 } from './ReactFiberSyncTaskQueue';
 import { HookHasEffect, Passive } from './ReactHookEffectTags';
@@ -35,7 +35,7 @@ import {
 
 let workInProcess: FiberNode | null = null;
 let wipRootRenderLane: Lane = NoLane;
-let rootDoesHasPassiveEffects: boolean = false;
+let rootDoesHasPassiveEffects = false;
 
 function prepareFreshStack(root: FiberRootNode, lane: Lane) {
 	workInProcess = createWorkInProcess(root.current, {});

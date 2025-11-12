@@ -24,10 +24,3 @@ export function flushSyncCallbacks() {
 		}
 	}
 }
-
-export const scheduleMircoTask =
-	typeof queueMicrotask === 'function'
-		? queueMicrotask
-		: typeof Promise === 'function'
-		? (callback: (...args: any) => void) => Promise.resolve().then(callback)
-		: setTimeout;

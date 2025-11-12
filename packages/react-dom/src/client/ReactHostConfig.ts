@@ -15,11 +15,14 @@ export function createInstance(type: string, props: Props): Instance {
 	return element as DOMElement;
 }
 
-export function appendInitialChild(parent: Instance, child: Instance) {
+export function appendInitialChild(
+	parent: Instance | Container,
+	child: Instance
+) {
 	parent.appendChild(child);
 }
 
-export function createTextInstance(content: string) {
+export function createTextInstance(content: string): TextInstance {
 	return document.createTextNode(content);
 }
 
@@ -60,3 +63,10 @@ export function insertChildToContainer(
 ) {
 	container.insertBefore(child, before);
 }
+
+export const scheduleMircoTask =
+	typeof queueMicrotask === 'function'
+		? queueMicrotask
+		: typeof Promise === 'function'
+		? (callback: (...args: any) => void) => Promise.resolve().then(callback)
+		: setTimeout;
