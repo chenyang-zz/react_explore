@@ -9,6 +9,7 @@
 		"@rollup/plugin-alias": "4.0.2",
 		"@rollup/plugin-commonjs": "23.0.0",
 		"@rollup/plugin-replace": "5.0.1",
+		"@types/scheduler": "^0.26.0",
 		"@typescript-eslint/eslint-plugin": "5.40.0",
 		"@typescript-eslint/parser": "5.40.0",
 		"@vitejs/plugin-react": "^2.2.0",
@@ -39,5 +40,8 @@
 	"workspaces": [
 		"packages/*",
 		"example/*"
-	]
+	],
+	"dependencies": {
+		"scheduler": "^0.27.0"
+	}
 }

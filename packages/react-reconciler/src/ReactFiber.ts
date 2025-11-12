@@ -9,6 +9,7 @@ import { type Flags, NoFlags } from './ReactFiberFlags';
 import type { Container } from 'hostConfig';
 import type { UpdateQueue } from './ReactUpdateQueue';
 import { NoLane, NoLanes, type Lane, type Lanes } from './ReactFiberLane';
+import type { Effect } from './ReactFiberHooks';
 
 export class FiberNode {
 	tag: WorkTag;
@@ -65,13 +66,18 @@ export class FiberNode {
 	}
 }
 
+export interface PendingPassiveEffects {
+	unmount: Effect[];
+	update: Effect[];
+}
+
 export class FiberRootNode {
 	container: Container;
 	current: FiberNode;
 	finishedWork: FiberNode | null;
 	pendingLanes: Lanes;
 	finishedLane: Lane;
-
+	pendingPassiveEffects: PendingPassiveEffects;
 	constructor(container: Container, hostRootFiber: FiberNode) {
 		this.container = container;
 		this.current = hostRootFiber;
@@ -79,6 +85,10 @@ export class FiberRootNode {
 		this.finishedWork = null;
 		this.pendingLanes = NoLanes;
 		this.finishedLane = NoLane;
+		this.pendingPassiveEffects = {
+			unmount: [],
+			update: []
+		};
 	}
 }
 
