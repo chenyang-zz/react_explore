@@ -22,14 +22,13 @@ type Priority =
 	| typeof LowPriority
 	| typeof IdlePriority;
 
-interface Work {
+interface Task {
 	count: number;
 	priority: Priority;
 }
 
-const workList: Work[] = [];
+const workList: Task[] = [];
 let prevPriority: Priority = IdlePriority;
-let curCallback: CallbackNode | null = null;
 
 const prioritys = [
 	LowPriority,
@@ -48,64 +47,36 @@ prioritys.forEach((priority: Priority) => {
 		'LowPriority'
 	][priority];
 	btn.onclick = () => {
-		workList.unshift({
+		const task = {
 			count: 100,
 			priority
-		});
-		schedule();
+		};
+		schedule(task);
 	};
 });
 
-function schedule() {
+function schedule(task: Task) {
 	const cbNode = getFirstCallbackNode();
-	const curWork = workList.sort((w1, w2) => w1.priority - w2.priority)[0];
 
-	// 策略模式
-	if (!curWork) {
-		curCallback = null;
-		cbNode && cancelCallback(cbNode);
-		return;
-	}
-	const { priority: curPriority } = curWork;
-	if (curPriority === prevPriority) {
-		return;
-	}
-	// 更高优先级的work
-	cbNode && cancelCallback(cbNode);
-
-	curCallback =
-		scheduleCallback(curPriority, preform.bind(null, curWork))?.callback ??
-		null;
+	scheduleCallback(task.priority, preform.bind(null, task));
 }
 
-function preform(work: Work, didTimeout?: boolean): any {
+function preform(task: Task, didTimeout?: boolean): any {
 	/**
 	 * 1. work.priority
-	 * 2. 饥饿问题
-	 * 3. 时间切片
+	 * 2. 时间切片
 	 */
-	const needSync = work.priority === ImmediatePriority || didTimeout;
+	const needSync = task.priority === ImmediatePriority || didTimeout;
 
-	while ((needSync || !shouldYield()) && work.count) {
-		work.count--;
-		insertSpan(work.priority + '');
+	while ((needSync || !shouldYield()) && task.count) {
+		task.count--;
+		insertSpan(task.priority + '');
 	}
 
-	// 中断执行 || 执行完
-	prevPriority = work.priority;
-	if (!work.count) {
-		const workIndex = workList.indexOf(work);
-		workList.splice(workIndex, 1);
-		prevPriority = IdlePriority;
-	}
-
-	// schedule()
-
-	const prevCallback = curCallback;
-	schedule();
-	const newCallback = curCallback;
-	if (newCallback && newCallback === prevCallback) {
-		return preform.bind(null, work);
+	// 时间切片耗完，中断执行 || 执行完
+	if (task.count !== 0) {
+		// 中断执行
+		return preform.bind(null, task);
 	}
 }
 
@@ -113,7 +84,7 @@ function insertSpan(content: string) {
 	const span = document.createElement('span');
 	span.innerText = '#';
 	span.className = `pri-${content}`;
-	doSomeBusyWork(10000000);
+	doSomeBusyWork(1000000);
 	root?.appendChild(span);
 }
 
