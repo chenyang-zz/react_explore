@@ -71,7 +71,7 @@ export function renderWithHooks(wip: FiberNode, lane: Lane) {
 	workInProgressHook = null;
 	currentHook = null;
 	renderLane = NoLane;
-	currentDispatcher.current = null
+	currentDispatcher.current = null;
 
 	return children;
 }
