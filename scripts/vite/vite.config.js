@@ -10,6 +10,7 @@ export default defineConfig({
 		react(),
 		replace({
 			__DEV__: true,
+			__EXPERIMENTAL__: false,
 			preventAssignment: true
 		})
 	],
@@ -26,6 +27,10 @@ export default defineConfig({
 			{
 				find: 'react-noop-renderer',
 				replacement: resolvePkgPath('react-noop-renderer')
+			},
+			{
+				find: 'scheduler',
+				replacement: resolvePkgPath('scheduler')
 			},
 			{
 				find: 'hostConfig',

@@ -25,6 +25,7 @@ export function getPackageJSON(pkgName) {
 export function getBaseRollupPlugins({
 	alien = {
 		__DEV__: true,
+		__EXPERIMENTAL__: false,
 		preventAssignment: true
 	},
 	typescript = {}
