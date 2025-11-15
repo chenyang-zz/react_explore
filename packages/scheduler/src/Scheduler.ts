@@ -58,7 +58,11 @@ let taskIdCounter = 1;
 let currentTask: Task | null = null;
 let currentPriorityLevel: PriorityLevel = NormalPriority;
 
-// 任务的超时id，用于clearTimeou
+// 是否暂停调度
+let isSchedulerPaused = false;
+
+// 任务的超时id，用于clearTimeout
+let taskTimeoutID = -1;
 
 // 是否有 work 在执行
 let isPerformingWork = false;
@@ -70,12 +74,12 @@ let isHostCallbackScheduled = false;
 let isMessageLoopRunning = false;
 
 // 是否有任务在倒计时
-const isHostTimeoutScheduled = false;
+let isHostTimeoutScheduled = false;
 
 // 如果主进程上有其他工作，Scheduler会周期性地产生线程，如用户事件。默认情况下，它每帧产生多次
 // 它不会尝试与帧边界对齐，因为大多数任务都不会需要帧对齐；
 // 对于那些需要帧边界对齐，使用requestAnimationFrame
-const frameInterval = frameYieldMs; // 时间切片，这是一个时间段
+let frameInterval = frameYieldMs; // 时间切片，这是一个时间段
 let startTime = -1; // 记录时间切片的起始值
 
 let needsPaint = false;
@@ -87,6 +91,46 @@ const localClearTimeout =
 const localSetImmediate =
 	typeof setImmediate !== 'undefined' ? setImmediate : null; // IE and Node.js + jsdom
 
+function advanceTimers(currentTime: number) {
+	// 检查不再延迟的任务并将其添加到队列中
+	let timer = peek(timerQueue);
+	while (timer !== null) {
+		if (timer.callback === null) {
+			// 定时器取消
+			pop(timerQueue);
+		} else if (timer.startTime < currentTime) {
+			// 计时器触发，传输到任务队列
+			pop(timerQueue);
+			timer.sortIndex = timer.expirationTime;
+			push(taskQueue, timer);
+			if (enableProfiling) {
+				// TODO: profiling
+			}
+		} else {
+			// 剩余的计时器正在等待
+			return;
+		}
+		timer = peek(timerQueue);
+	}
+}
+
+function handleTimeout(currentTime: number) {
+	isHostTimeoutScheduled = true;
+	advanceTimers(currentTime);
+
+	if (!isHostCallbackScheduled) {
+		if (peek(taskQueue) !== null) {
+			isHostCallbackScheduled = true;
+			requestHostCallback();
+		} else {
+			const firstTimer = peek(timerQueue);
+			if (firstTimer !== null) {
+				requestHostTimeout(handleTimeout, firstTimer.startTime - currentTime);
+			}
+		}
+	}
+}
+
 function flushWork(initialTime: number) {
 	if (enableProfiling) {
 		// TODO: profiling
@@ -95,14 +139,17 @@ function flushWork(initialTime: number) {
 	// 下次安排工作时，我们需要一个主机回调
 	isHostCallbackScheduled = false;
 	if (isHostTimeoutScheduled) {
-		// TODO: timer
+		// 我们安排了一个暂停，但现在不需要了，取消它
+		isHostTimeoutScheduled = false;
+		cancelHostTimeout();
 	}
 
 	isPerformingWork = true;
 	const previousPriorityLevel = currentPriorityLevel;
 	try {
 		if (enableProfiling) {
-			// TODO:
+			// TODO: profiling
+			return false;
 		} else {
 			return workLoop(initialTime);
 		}
@@ -114,9 +161,6 @@ function flushWork(initialTime: number) {
 			// TODO: profiling
 		}
 	}
-
-	// TODO:
-	return false;
 }
 
 // 有很多task，每个task都有一个callback，callback执行完了，就执行下一个task
@@ -125,7 +169,7 @@ function flushWork(initialTime: number) {
 // 返回为true，表示还有任务没有执行完，需要继续执行
 function workLoop(initialTime: number) {
 	let currentTime = initialTime;
-	// TODO: advanceTimers
+	advanceTimers(currentTime);
 	currentTask = peek(taskQueue);
 	while (currentTask !== null) {
 		if (!enableAlwaysYieldScheduler) {
@@ -152,7 +196,7 @@ function workLoop(initialTime: number) {
 				if (enableProfiling) {
 					// TODO: profiling
 				}
-				// TODO: advanceTimers
+				advanceTimers(currentTime);
 				return true;
 			} else {
 				if (enableProfiling) {
@@ -161,7 +205,7 @@ function workLoop(initialTime: number) {
 				if (currentTask === peek(taskQueue)) {
 					pop(taskQueue);
 				}
-				// TODO: advanceTimers
+				advanceTimers(currentTime);
 			}
 		} else {
 			pop(taskQueue);
@@ -179,7 +223,10 @@ function workLoop(initialTime: number) {
 	if (currentTask !== null) {
 		return true;
 	} else {
-		// TODO: timer
+		const firstTimer = peek(timerQueue);
+		if (firstTimer !== null) {
+			requestHostTimeout(handleTimeout, firstTimer.startTime - currentTime);
+		}
 		return false;
 	}
 }
@@ -188,26 +235,76 @@ function unstable_runWithPriority<T>(
 	priorityLevel: PriorityLevel,
 	eventHandler: () => T
 ): T {
-	// TODO: unstable_runWithPriority
-	return null as T;
+	switch (priorityLevel) {
+		case ImmediatePriority:
+		case UserBlockingPriority:
+		case NormalPriority:
+		case LowPriority:
+		case IdlePriority:
+			break;
+		default:
+			priorityLevel = NormalPriority;
+	}
+
+	const previousPriorityLevel = currentPriorityLevel;
+	currentPriorityLevel = priorityLevel;
+
+	try {
+		return eventHandler();
+	} finally {
+		currentPriorityLevel = previousPriorityLevel;
+	}
 }
 
 function unstable_next<T>(eventHandler: () => T): T {
-	// TODO: unstable_next
-	return null as T;
+	let priorityLevel: PriorityLevel;
+	switch (currentPriorityLevel) {
+		case ImmediatePriority:
+		case UserBlockingPriority:
+		case NormalPriority:
+			// 切换到正常优先级
+			priorityLevel = NormalPriority;
+			break;
+		default:
+			// 任何低于正常优先级的都应保持当前级别
+			priorityLevel = currentPriorityLevel;
+			break;
+	}
+
+	const previousPriorityLevel = currentPriorityLevel;
+	currentPriorityLevel = priorityLevel;
+
+	try {
+		return eventHandler();
+	} finally {
+		currentPriorityLevel = previousPriorityLevel;
+	}
 }
 
-function unstable_wrapCallback<T>(callback: T): T {
-	// TODO: unstable_wrapCallback
-	return null as T;
+function unstable_wrapCallback<T extends () => any>(callback: T): T {
+	const parentPriorityLevel = currentPriorityLevel;
+	return function (this: unknown, ...args: []) {
+		// 这是runWithPriority的一个分支，为了性能而内联
+		const previousPriorityLevel = currentPriorityLevel;
+		currentPriorityLevel = parentPriorityLevel;
+		try {
+			return callback.apply(this, args);
+		} finally {
+			currentPriorityLevel = previousPriorityLevel;
+		}
+	} as T;
 }
 
 function unstable_pauseExecution() {
-	// TODO: unstable_pauseExecution
+	isSchedulerPaused = true;
 }
 
 function unstable_continueExecution() {
-	// TODO: unstable_continueExecution
+	isSchedulerPaused = false;
+	if (!isHostCallbackScheduled && !isPerformingWork) {
+		isHostCallbackScheduled = true;
+		requestHostCallback();
+	}
 }
 
 function unstable_getFirstCallbackNode(): Task | null {
@@ -215,7 +312,12 @@ function unstable_getFirstCallbackNode(): Task | null {
 }
 
 function unstable_cancelCallback(task: Task) {
-	// TODO: unstable_cancelCallback
+	if (enableProfiling) {
+		// TODO: profiling
+	}
+
+	// 空回调，表示任务已被取消。(不能从队列中删除，因为你不能从基于数组的堆队列中删除任意节点，除了第一个)
+	task.callback = null;
 }
 
 // 任务调度器的入口函数
@@ -283,7 +385,7 @@ function unstable_scheduleCallback(
 		push(taskQueue, newTask);
 
 		if (enableProfiling) {
-			// TODO:
+			// TODO: profiling
 		}
 
 		// 如果需要，调度一个主线程回调。
@@ -349,11 +451,7 @@ if (typeof localSetImmediate === 'function') {
 } else {
 	// 使用setTimeout兜底
 	schedulePerformWorkUntilDeadline = () => {
-		if (localSetTimeout !== null) {
-			localSetTimeout(performWorkUntilDeadline, 0);
-		} else {
-			// TODO:
-		}
+		localSetTimeout!(performWorkUntilDeadline, 0);
 	};
 }
 
@@ -371,11 +469,23 @@ function shouldYieldToHost() {
 }
 
 function requestPaint() {
-	// TODO: requestPaint
+	// 暂时没有
 }
 
 function forceFrameRate(fps: number) {
-	// TODO: forceFrameRate
+	if (fps < 0 || fps > 125) {
+		console.error(
+			'forceFrameRate takes a positive int between 0 and 125, ' +
+				'forcing frame rates higher than 125 fps is not supported'
+		);
+		return;
+	}
+	if (fps > 0) {
+		frameInterval = Math.floor(1000 / fps);
+	} else {
+		// 重置帧率
+		frameInterval = frameYieldMs;
+	}
 }
 
 function requestHostCallback() {
@@ -383,6 +493,20 @@ function requestHostCallback() {
 		isMessageLoopRunning = true;
 		schedulePerformWorkUntilDeadline();
 	}
+}
+
+function requestHostTimeout(
+	callback: (currentTime: number) => void,
+	ms: number
+) {
+	taskTimeoutID = localSetTimeout!(() => {
+		callback(getCurrentTime());
+	}, ms);
+}
+
+function cancelHostTimeout() {
+	localClearTimeout!(taskTimeoutID);
+	taskTimeoutID = -1;
 }
 
 export {
