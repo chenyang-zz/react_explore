@@ -1,8 +1,9 @@
 // React
 
 import { jsx } from './src/jsx';
-import { Dispatcher, resolveDispatcher } from './src/ReactCuurentDispatcher';
-import currentDispatcher from './src/ReactCuurentDispatcher';
+import { Dispatcher, resolveDispatcher } from './src/ReactCurentDispatcher';
+import currentDispatcher from './src/ReactCurentDispatcher';
+
 
 export const useState: Dispatcher['useState'] = (initialState) => {
 	const dispatcher = resolveDispatcher();
@@ -16,8 +17,9 @@ export const useEffect: Dispatcher['useEffect'] = (create, deps) => {
 
 // 内部数据共享层
 export const __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = {
-	currentDispatcjer: currentDispatcher
+	currentDispatcher
 };
+
 
 export const version = '0.0.0';
 export const createElement = jsx;

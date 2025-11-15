@@ -9,7 +9,6 @@
 	"author": "chenyang",
 	"license": "ISC",
 	"dependencies": {
-		"shared": "workspace:*",
-		"react-dom": "workspace:*"
+		"shared": "workspace:*"
 	}
 }

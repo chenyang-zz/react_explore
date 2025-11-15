@@ -1,4 +1,4 @@
-import type { Dispatch, Dispatcher } from 'react/src/ReactCuurentDispatcher';
+import type { Dispatch, Dispatcher } from 'react/src/ReactCurentDispatcher';
 import { FiberNode } from './ReactFiber';
 import internals from 'shared/ReactSharedInternals';
 import {
@@ -20,7 +20,7 @@ let workInProgressHook: Hook | null = null;
 let currentHook: Hook | null = null;
 let renderLane: Lane = NoLane;
 
-const { currentDispatcjer } = internals;
+const { currentDispatcher } = internals;
 
 interface Hook {
 	memoizedState: any;
@@ -55,10 +55,10 @@ export function renderWithHooks(wip: FiberNode, lane: Lane) {
 	const current = wip.alternate;
 	if (current !== null) {
 		// update
-		currentDispatcjer.current = HooksDispatcherOnUpdate;
+		currentDispatcher.current = HooksDispatcherOnUpdate;
 	} else {
 		// mount
-		currentDispatcjer.current = HooksDispatcherOnMount;
+		currentDispatcher.current = HooksDispatcherOnMount;
 	}
 
 	const Component = wip.type;
@@ -71,6 +71,7 @@ export function renderWithHooks(wip: FiberNode, lane: Lane) {
 	workInProgressHook = null;
 	currentHook = null;
 	renderLane = NoLane;
+	currentDispatcher.current = null
 
 	return children;
 }
@@ -102,6 +103,7 @@ function updateEffect(create: EffectCallback, deps: EffectDeps | void) {
 	const hook = updateWorkInProgressHook();
 	const nextDeps = deps === undefined ? null : deps;
 	let destroy: EffectCallback | void;
+	console.log(123123);
 
 	if (currentHook !== null) {
 		const prevEffect = currentHook.memoizedState as Effect;

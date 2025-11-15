@@ -1,4 +1,4 @@
-import type { Dispatch } from 'react/src/ReactCuurentDispatcher';
+import type { Dispatch } from 'react/src/ReactCurentDispatcher';
 import type { Action } from 'shared/ReactTypes';
 import type { Lane } from './ReactFiberLane';
 

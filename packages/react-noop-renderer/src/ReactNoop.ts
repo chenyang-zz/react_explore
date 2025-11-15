@@ -5,6 +5,7 @@ import {
 import type { Container, Instance } from './createReactNoop';
 import type { ReactElementType } from 'shared/ReactTypes';
 import { REACT_ELEMENT_TYPE, REACT_FRAGMENT_TYPE } from 'shared/ReactSymbols';
+import * as Scheduler from 'scheduler';
 
 let idCounter = 0;
 
@@ -24,8 +25,8 @@ export function createRoot() {
 		return null;
 	}
 
-	function getChildrenAsJsx(root: Container) {
-		const children = childToJsx(root.children);
+	function getChildrenAsJSX(root: Container) {
+		const children = childToJSX(root.children);
 		if (Array.isArray(children)) {
 			return {
 				$$typeof: REACT_ELEMENT_TYPE,
@@ -41,7 +42,7 @@ export function createRoot() {
 		return children;
 	}
 
-	function childToJsx(child: any): any {
+	function childToJSX(child: any): any {
 		if (typeof child === 'number' || typeof child === 'string') {
 			return child;
 		}
@@ -51,9 +52,9 @@ export function createRoot() {
 				return null;
 			}
 			if (child.length === 1) {
-				return childToJsx(child[0]);
+				return childToJSX(child[0]);
 			}
-			const children = child.map(childToJsx);
+			const children = child.map(childToJSX);
 			if (
 				children.every(
 					(child) => typeof child === 'number' || typeof child === 'string'
@@ -67,7 +68,7 @@ export function createRoot() {
 		// Instance
 		if (Array.isArray(child.children)) {
 			const instance: Instance = child;
-			const children = childToJsx(child.children);
+			const children = childToJSX(child.children);
 			const props = instance.props;
 			if (children !== null) {
 				props.children = children;
@@ -87,14 +88,15 @@ export function createRoot() {
 	}
 
 	return {
+		_Scheduler: Scheduler,
 		render(element: ReactElementType) {
 			return updateContainer(element, root);
 		},
 		getChildren() {
 			return getChildren(container);
 		},
-		getChildrenAsJsx() {
-			return getChildrenAsJsx(container);
+		getChildrenAsJSX() {
+			return getChildrenAsJSX(container);
 		}
 	};
 }
