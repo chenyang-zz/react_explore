@@ -18,12 +18,13 @@ import {
 	UserBlockingPriority
 } from './SchedulerPriorities';
 
-type Callback = (arg: boolean) => Callback | void;
-export type CallbackNode = Callback;
+export type FrameCallbackType = (
+	didTimeout: boolean
+) => FrameCallbackType | void;
 
-export type Task = {
+export type CallbackNode = {
 	id: number;
-	callback: Callback | null;
+	callback: FrameCallbackType | null;
 	priorityLevel: PriorityLevel;
 	startTime: number;
 	expirationTime: number;
@@ -50,19 +51,19 @@ if (hasPerformanceNow) {
 const maxSigned31BitInt = 1073741823;
 
 // 任务池，最小堆
-const taskQueue: Array<Task> = []; // 没有延迟的任务
-const timerQueue: Array<Task> = []; // 有延迟的任务
+const taskQueue: Array<CallbackNode> = []; // 没有延迟的任务
+const timerQueue: Array<CallbackNode> = []; // 有延迟的任务
 
 // 标记task的唯一性
 let taskIdCounter = 1;
-let currentTask: Task | null = null;
+let currentTask: CallbackNode | null = null;
 let currentPriorityLevel: PriorityLevel = NormalPriority;
 
 // 是否暂停调度
 let isSchedulerPaused = false;
 
 // 任务的超时id，用于clearTimeout
-let taskTimeoutID = -1;
+let taskTimeoutID: NodeJS.Timeout | number = -1;
 
 // 是否有 work 在执行
 let isPerformingWork = false;
@@ -307,11 +308,11 @@ function unstable_continueExecution() {
 	}
 }
 
-function unstable_getFirstCallbackNode(): Task | null {
+function unstable_getFirstCallbackNode(): CallbackNode | null {
 	return peek(taskQueue);
 }
 
-function unstable_cancelCallback(task: Task) {
+function unstable_cancelCallback(task: CallbackNode) {
 	if (enableProfiling) {
 		// TODO: profiling
 	}
@@ -323,9 +324,9 @@ function unstable_cancelCallback(task: Task) {
 // 任务调度器的入口函数
 function unstable_scheduleCallback(
 	priorityLevel: PriorityLevel,
-	callback: Callback,
+	callback: FrameCallbackType,
 	options?: { delay: number }
-): Task {
+): CallbackNode {
 	const currentTime = getCurrentTime();
 
 	let startTime;
@@ -363,7 +364,7 @@ function unstable_scheduleCallback(
 	}
 
 	const expirationTime = startTime + timeout;
-	const newTask: Task = {
+	const newTask: CallbackNode = {
 		id: taskIdCounter++,
 		callback,
 		priorityLevel,

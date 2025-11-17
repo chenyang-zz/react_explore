@@ -22,13 +22,14 @@ type Priority =
 	| typeof LowPriority
 	| typeof IdlePriority;
 
-interface Task {
+interface Work {
 	count: number;
 	priority: Priority;
 }
 
-const workList: Task[] = [];
+const workList: Work[] = [];
 let prevPriority: Priority = IdlePriority;
+let curCallback: CallbackNode | null = null;
 
 const prioritys = [
 	LowPriority,
@@ -47,44 +48,70 @@ prioritys.forEach((priority: Priority) => {
 		'LowPriority'
 	][priority];
 	btn.onclick = () => {
-		const task = {
+		workList.unshift({
 			count: 100,
 			priority
-		};
-		schedule(task);
+		});
+		schedule();
 	};
 });
 
-function schedule(task: Task) {
+function schedule() {
 	const cbNode = getFirstCallbackNode();
+	const curWork = workList.sort((w1, w2) => w1.priority - w2.priority)[0];
 
-	scheduleCallback(task.priority, preform.bind(null, task));
+	// 策略模式
+	if (!curWork) {
+		curCallback = null;
+		cbNode && cancelCallback(cbNode);
+		return;
+	}
+	const { priority: curPriority } = curWork;
+	if (curPriority === prevPriority) {
+		return;
+	}
+	// 更高优先级的work
+	cbNode && cancelCallback(cbNode);
+
+	curCallback = scheduleCallback(curPriority, preform.bind(null, curWork));
 }
 
-function preform(task: Task, didTimeout?: boolean): any {
+function preform(work: Work, didTimeout?: boolean): any {
 	/**
 	 * 1. work.priority
-	 * 2. 时间切片
+	 * 2. 饥饿问题
+	 * 3. 时间切片
 	 */
-	const needSync = task.priority === ImmediatePriority || didTimeout;
+	const needSync = work.priority === ImmediatePriority || didTimeout;
 
-	while ((needSync || !shouldYield()) && task.count) {
-		task.count--;
-		insertSpan(task.priority + '');
+	while ((needSync || !shouldYield()) && work.count) {
+		work.count--;
+		insertSpan(work.priority + '');
 	}
 
-	// 时间切片耗完，中断执行 || 执行完
-	if (task.count !== 0) {
-		// 中断执行
-		return preform.bind(null, task);
+	// 中断执行 || 执行完
+	prevPriority = work.priority;
+	if (!work.count) {
+		const workIndex = workList.indexOf(work);
+		workList.splice(workIndex, 1);
+		prevPriority = IdlePriority;
+	}
+
+	// schedule()
+
+	const prevCallback = curCallback;
+	schedule();
+	const newCallback = curCallback;
+	if (newCallback && newCallback === prevCallback) {
+		return preform.bind(null, work);
 	}
 }
 
 function insertSpan(content: string) {
 	const span = document.createElement('span');
-	span.innerText = '#';
+	span.innerText = content;
 	span.className = `pri-${content}`;
-	doSomeBusyWork(1000000);
+	doSomeBusyWork(10000000);
 	root?.appendChild(span);
 }
 
