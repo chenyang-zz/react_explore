@@ -6,6 +6,7 @@ import {
 	createUpdateQueue,
 	enqueueUpdate,
 	processUpdateQueue,
+	Update,
 	UpdateQueue
 } from './ReactUpdateQueue';
 import type { Action } from 'shared/ReactTypes';
@@ -25,6 +26,8 @@ const { currentDispatcher } = internals;
 interface Hook {
 	memoizedState: any;
 	updateQueue: UpdateQueue<any> | null;
+	baseState: any;
+	baseQueue: Update<any> | null;
 	next: Hook | null;
 }
 
@@ -213,15 +216,41 @@ function updateState<State>(): [State, Dispatch<State>] {
 
 	// 计算新state的逻辑
 	const queue = hook.updateQueue as UpdateQueue<State>;
+	const baesState = hook.baseState;
 	const pending = queue.shared.pending;
-	queue.shared.pending = null;
+	const current = currentHook as Hook;
+	let baseQueue = current.baseQueue;
+
 	if (pending !== null) {
-		const { memoizedState } = processUpdateQueue(
-			hook.memoizedState,
-			pending,
-			renderLane
-		);
-		hook.memoizedState = memoizedState;
+		// pending baseQueue update 保存在current中
+		if (baseQueue !== null) {
+			// baseQueue b2 -> b0 -> b1 -> b2
+			// pendingQueue p2 -> p0 -> p1 -> p2
+			// b0
+			const baseFirst = baseQueue.next;
+			// p0
+			const pendingFirst = pending.next;
+			// b2 -> p0
+			baseQueue.next = pendingFirst;
+			// p2 -> b0
+			pending.next = baseFirst;
+			// p2 -> b0 -> b1 -> b2 -> p0 -> p1 -> p2
+		}
+		baseQueue = pending;
+		// 保存在current中
+		current.baseQueue = pending;
+		queue.shared.pending = null;
+
+		if (baseQueue !== null) {
+			const {
+				memoizedState,
+				baseQueue: newBaseQueue,
+				baseState: newBaseState
+			} = processUpdateQueue(baesState, baseQueue, renderLane);
+			hook.memoizedState = memoizedState;
+			hook.baseState = newBaseState;
+			hook.baseQueue = newBaseQueue;
+		}
 	}
 
 	return [hook.memoizedState, queue.dispatch as Dispatch<State>];
@@ -242,6 +271,8 @@ function mountWorkInProgressHook(): Hook {
 	const hook: Hook = {
 		memoizedState: null,
 		updateQueue: null,
+		baseState: null,
+		baseQueue: null,
 		next: null
 	};
 
@@ -292,6 +323,8 @@ function updateWorkInProgressHook(): Hook {
 	const newHook: Hook = {
 		memoizedState: currentHook.memoizedState,
 		updateQueue: currentHook.updateQueue,
+		baseState: currentHook.baseState,
+		baseQueue: currentHook.baseQueue,
 		next: null
 	};
 

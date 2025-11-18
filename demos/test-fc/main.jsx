@@ -3,30 +3,20 @@ import ReactDOM from 'react-dom';
 
 const root = document.getElementById('root');
 
-function Child() {
-	useEffect(() => {
-		console.log('Child mount');
-		return () => {
-			console.log('Child unmount');
-		};
-	}, []);
-	return <span>explore react</span>;
+function Child({ children }) {
+	const now = performance.now();
+	while (performance.now() - now < 0.5) {}
+	return <li>{children}</li>;
 }
 
 function App() {
-	const [num, setNum] = useState(0);
-	useEffect(() => {
-		console.log('App mount');
-	}, []);
-
-	useEffect(() => {
-		console.log('num change create', num);
-		return () => {
-			console.log('num change destroy', num);
-		};
-	}, [num]);
+	const [num, setNum] = useState(100);
 	return (
-		<div onClick={() => setNum(num + 1)}>{num === 0 ? <Child /> : 'noop'}</div>
+		<ul onClick={() => setNum(50)}>
+			{new Array(num).fill(0).map((_, i) => {
+				return <Child key={i}>{i}</Child>;
+			})}
+		</ul>
 	);
 }
 
