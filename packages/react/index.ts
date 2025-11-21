@@ -3,6 +3,7 @@
 import { jsx } from './src/jsx';
 import { Dispatcher, resolveDispatcher } from './src/ReactCurentDispatcher';
 import currentDispatcher from './src/ReactCurentDispatcher';
+import currentBatchConfig from './src/ReactCurrentBatchConfig';
 
 export const useState: Dispatcher['useState'] = (initialState) => {
 	const dispatcher = resolveDispatcher();
@@ -14,9 +15,15 @@ export const useEffect: Dispatcher['useEffect'] = (create, deps) => {
 	return dispatcher.useEffect(create, deps);
 };
 
+export const useTransition: Dispatcher['useTransition'] = () => {
+	const dispatcher = resolveDispatcher();
+	return dispatcher.useTransition();
+};
+
 // 内部数据共享层
 export const __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = {
-	currentDispatcher
+	currentDispatcher,
+	currentBatchConfig
 };
 
 export const version = '0.0.0';

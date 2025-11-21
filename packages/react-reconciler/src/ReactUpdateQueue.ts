@@ -63,6 +63,8 @@ export function processUpdateQueue<State>(
 		baseQueue: null
 	};
 
+	
+
 	if (pendingUpdate !== null) {
 		// 第一个update
 		const first = pendingUpdate.next;
