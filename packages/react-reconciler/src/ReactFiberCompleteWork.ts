@@ -13,11 +13,15 @@ import {
 	HostRoot,
 	HostText
 } from './ReactWorkTags';
-import { NoFlags, Update } from './ReactFiberFlags';
+import { NoFlags, Ref, Update } from './ReactFiberFlags';
 import { Props, Type } from 'shared/ReactTypes';
 
 function markUpdate(fiber: FiberNode) {
 	fiber.flags |= Update;
+}
+
+function markRef(fiber: FiberNode) {
+	fiber.flags |= Ref;
 }
 
 // 递归中的归
@@ -34,6 +38,10 @@ export function completeWork(wip: FiberNode) {
 				// className style ...
 				// TODO: 比较属性变化
 				markUpdate(wip);
+				// 标记Ref
+				if (current.ref !== wip.ref) {
+					markRef(wip);
+				}
 			} else {
 				// mount
 				// 1. 构建DOM
@@ -41,6 +49,10 @@ export function completeWork(wip: FiberNode) {
 				const instance = createInstance(wip.type, newProps);
 				appendAllChildren(instance, wip);
 				wip.stateNode = instance;
+				// 标记Ref
+				if (wip.ref !== null) {
+					markRef(wip);
+				}
 			}
 			bubbleProperties(wip);
 			return;

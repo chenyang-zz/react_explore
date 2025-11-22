@@ -13,7 +13,7 @@ import type { Action } from 'shared/ReactTypes';
 import { scheduleUpdateOnFiber } from './ReactFiberWorkLoop';
 import { requestUpdateLane } from './ReactFiberLane';
 import { NoLane, type Lane } from './ReactFiberLane';
-import { PassiveEffect, type Flags } from './ReactFiberFlags';
+import { Passive as PassiveEffect, type Flags } from './ReactFiberFlags';
 import { HookFlags, HookHasEffect, Passive } from './ReactHookEffectTags';
 
 let currentlyRenderingFiber: FiberNode | null = null;
@@ -82,13 +82,15 @@ export function renderWithHooks(wip: FiberNode, lane: Lane) {
 const HooksDispatcherOnMount: Dispatcher = {
 	useState: mountState,
 	useEffect: mountEffect,
-	useTransition: mountTransition
+	useTransition: mountTransition,
+	useRef: mountRef
 };
 
 const HooksDispatcherOnUpdate: Dispatcher = {
 	useState: updateState,
 	useEffect: updateEffect,
-	useTransition: updateTransition
+	useTransition: updateTransition,
+	useRef: updateRef
 };
 
 function mountEffect(create: EffectCallback, deps: EffectDeps | void) {
@@ -257,6 +259,18 @@ function updateState<State>(): [State, Dispatch<State>] {
 	}
 
 	return [hook.memoizedState, queue.dispatch as Dispatch<State>];
+}
+
+function mountRef<T>(initialValue: T): { current: T } {
+	const hook = mountWorkInProgressHook();
+	const ref = { current: initialValue };
+	hook.memoizedState = ref;
+	return ref;
+}
+
+function updateRef<T>(initialValue: T): { current: T } {
+	const hook = updateWorkInProgressHook();
+	return hook.memoizedState;
 }
 
 function mountTransition(): [boolean, (callback: () => void) => void] {

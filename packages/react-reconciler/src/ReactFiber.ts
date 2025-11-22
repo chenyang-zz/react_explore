@@ -23,7 +23,7 @@ export class FiberNode {
 	child: FiberNode | null;
 	index: number;
 
-	ref: Ref;
+	ref: Ref | null;
 
 	pendingProps: Props;
 	memoizedProps: Props | null;
@@ -125,12 +125,13 @@ export function createWorkInProcess(
 	// wip.child = current.child;
 	wip.memoizedProps = current.memoizedProps;
 	wip.memoizedState = current.memoizedState;
+	wip.ref = current.ref;
 
 	return wip;
 }
 
 export function createFiberFromElement(element: ReactElementType): FiberNode {
-	const { type, key, props } = element;
+	const { type, key, props, ref } = element;
 	let fiberTag: WorkTag = FunctionComponent;
 
 	if (typeof type === 'string') {
@@ -140,9 +141,10 @@ export function createFiberFromElement(element: ReactElementType): FiberNode {
 		console.warn('未定义的type类型', element);
 	}
 
-	const filber = new FiberNode(fiberTag, props, key);
-	filber.type = type;
-	return filber;
+	const fiber = new FiberNode(fiberTag, props, key);
+	fiber.type = type;
+	fiber.ref = ref;
+	return fiber;
 }
 
 export function createFiberFromFragment(elements: any[], key: Key): FiberNode {
